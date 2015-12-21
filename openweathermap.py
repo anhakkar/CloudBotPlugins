@@ -1,7 +1,10 @@
 """
 openweathermap.py - openweathermap.org plugin for CloudBot
 
-Requires an openweathermap api key.
+Requires:
+pytz ('pip install pytz')
+OpenWeatherMap API key (config.json 'api_keys' 'weather_api')
+GeoNames username (config.json 'api_keys' 'geonames_api')
 
 Created by Mikko Kautto <https://github.com/pasuuna>
 
@@ -22,11 +25,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from cloudbot import hook
 import requests
 import json
-import datetime
+from datetime import datetime
+import pytz
 
 default_city = 'Helsinki,Finland'
-base_url = 'http://api.openweathermap.org/data/2.5/'
-weather_api = base_url + 'weather?q='
+weather_api_base_url = 'http://api.openweathermap.org/data/2.5/'
+weather_api = weather_api_base_url + 'weather?q='
+geonames_base_url = 'http://api.geonames.org/timezoneJSON?'
 
 description_translations = {
     200:'ukkosta ja kevyttä sadetta',
@@ -128,10 +133,15 @@ def winddirection(degrees):
     else:
         return
 
+def localizeutcdate(date, local_zone):
+    return pytz.utc.localize(date, is_dst=None).astimezone(local_zone)
+
 @hook.on_start()
 def load_key(bot):
-    global apikey
-    apikey = bot.config.get('api_keys', {}).get('weather_api', None)
+    global weather_apikey
+    global geonames_username
+    weather_apikey = bot.config.get('api_keys', {}).get('weather_api', None)
+    geonames_username = bot.config.get('api_keys', {}).get('geonames_api', None)
 
 @hook.command('weather')
 def weather(text):
@@ -139,15 +149,22 @@ def weather(text):
     if not city:
         city = default_city
 
-    result = requests.get(weather_api, params={'q': city, 'appid': apikey}).json()
+    weather_result = requests.get(weather_api, params={'q': city, 'appid': weather_apikey}).json()
 
-    city_name = str(result['name'])
-    temperature = str(round(result['main']['temp'] - 273.15, 1))
-    weather_description = description_translations[int(result['weather'][0]['id'])]
-    wind_speed = str(result['wind']['speed'])
-    wind_direction = winddirection(result['wind']['deg'])
-    sunrise = datetime.datetime.fromtimestamp(int(result['sys']['sunrise'])).strftime('%H:%M')
-    sunset = datetime.datetime.fromtimestamp(int(result['sys']['sunset'])).strftime('%H:%M')
+    city_name = str(weather_result['name'])
+    temperature = str(round(weather_result['main']['temp'] - 273.15, 1))
+    weather_description = description_translations[int(weather_result['weather'][0]['id'])]
+    wind_speed = str(weather_result['wind']['speed'])
+    wind_direction = winddirection(weather_result['wind']['deg'])
+    lat = weather_result['coord']['lat']
+    lon = weather_result['coord']['lon']
 
-    out = '{}: Lämpötila Herra Jesaja {}°, {}, tuuli {}m/s {}. Aurinko nousee klo. {} ja laskee klo. {}.'
-    return out.format(city_name, temperature, weather_description, wind_speed, wind_direction, sunrise, sunset)
+    geonames_result = requests.get(geonames_base_url, params={'lat': lat, 'lng': lon, 'username': geonames_username}).json()
+
+    city_tz = pytz.timezone(geonames_result['timezoneId'])
+    sunrise = localizeutcdate(datetime.fromtimestamp(int(weather_result['sys']['sunrise'])), city_tz).strftime('%H:%M')
+    sunset = localizeutcdate(datetime.fromtimestamp(int(weather_result['sys']['sunset'])), city_tz).strftime('%H:%M')
+    offset = datetime.now(city_tz).strftime('%z')
+
+    out = '{}: Lämpötila Herra Jesaja {}°, {}, tuuli {}m/s {}. Aurinko nousee klo. {} ja laskee klo. {} (UTC {}).'
+    return out.format(city_name, temperature, weather_description, wind_speed, wind_direction, sunrise, sunset, offset)
