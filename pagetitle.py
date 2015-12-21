@@ -2,11 +2,11 @@
 pagetitle.py - page title plugin for CloudBot
 
 Listens for urls on a channel and prints the <title>-element of the page along
-with the url. Also creates a is.gd link for long urls.
+with the url. Also creates is.gd links for long urls.
 
 The plugin checks all other regex hooks currently active and does not print
 anything if the url is matched by another plugin. This way it will not
-conflict with other scripts with url regex hooks (youtube, twitch).
+conflict with other scripts with URL regex hooks (youtube, twitch.tv, ...).
 
 Created by Mikko Kautto <https://github.com/pasuuna>
 
@@ -47,4 +47,4 @@ def pagetitle(match, bot):
     if len(url) > url_shortening_limit:
         url = requests.get(base_url, params={"format": "simple", "url": url}).text
 
-    return '{} - {}'.format(html.title.text, url)
+    return '{} - {}'.format(html.title.text.strip(), url)
