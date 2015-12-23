@@ -76,6 +76,13 @@ def find_url(db, network, channel, url):
 def urlnazi(match, nick, chan, db, conn, bot):
     url = match.group()
 
+    try:
+        r = requests.get(url)
+        if r.status_code != requests.codes.ok:
+            return url + ': error - HTTP status code ' + str(r.status_code)
+    except requests.ConnectionError:
+        return url + ": failed to connect"
+
     nazi = ''
     found_url = find_url(db, conn.name, chan, url)
     if found_url:
@@ -89,7 +96,6 @@ def urlnazi(match, nick, chan, db, conn, bot):
         if re.search(regex, url) and str(hook).find(os.path.basename(__file__)) == -1:
             return
 
-    r = requests.get(url)
     html = BeautifulSoup(r.text)
 
     if len(url) > url_shortening_limit:
