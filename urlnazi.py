@@ -80,7 +80,7 @@ def urlnazi(match, nick, chan, db, conn, bot):
     found_url = find_url(db, conn.name, chan, url)
     if found_url:
         if found_url.user != nick:
-            nazi = '\x0304 - OLD! Originally posted by {} on {}'\
+            nazi = ' - \x0304OLD! Originally posted by {} on {}'\
                     .format(found_url.user,found_url.url_timestamp.strftime('%d.%m.%Y') + '\x0304')
     else:
         add_url(db, conn.name, chan, nick, url, datetime.now())
