@@ -56,7 +56,7 @@ def add_url(db, network, channel, user, url, url_timestamp):
     query = table.insert().values(
         network = network.lower(),
         channel = channel.lower(),
-        user = user.lower(),
+        user = user,
         url = url,
         url_timestamp = url_timestamp
     )
