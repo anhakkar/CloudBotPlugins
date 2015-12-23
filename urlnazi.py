@@ -3,8 +3,8 @@ urlnazi.py - URL Nazi plugin for CloudBot
 
 Listens for URL:s on a channel and prints the <title>-element of the page along
 with the URL. Also creates is.gd links for long urls. If the URL has already
-posted on the channel, it will print the original poster of the URL and the
-date the URL was originally posted.
+posted on the channel by another user, it will print the original poster of the
+URL and the date the URL was originally posted.
 
 The plugin checks all other regex hooks currently active and does not print
 anything if the URL is matched by another plugin. This way it will not
@@ -73,13 +73,15 @@ def find_url(db, network, channel, url):
     return result
 
 @hook.regex(url_regex)
-def urlnazi(match, nick, chan, db, conn, notice, bot):
+def urlnazi(match, nick, chan, db, conn, bot):
     url = match.group()
 
     nazi = ''
     found_url = find_url(db, conn.name, chan, url)
     if found_url:
-        nazi = '\x0304 - OLD! Originally posted by {} on {}'.format(found_url.user, found_url.url_timestamp.strftime('%d.%m.%Y') + '\x0304')
+        if found_url.user != nick:
+            nazi = '\x0304 - OLD! Originally posted by {} on {}'\
+                    .format(found_url.user,found_url.url_timestamp.strftime('%d.%m.%Y') + '\x0304')
     else:
         add_url(db, conn.name, chan, nick, url, datetime.now())
 
