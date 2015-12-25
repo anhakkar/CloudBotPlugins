@@ -2,9 +2,10 @@
 urlnazi.py - URL Nazi plugin for CloudBot
 
 Listens for URL:s on a channel and prints the <title>-element of the page along
-with the URL. Also creates is.gd links for long urls. If the URL has already
-posted on the channel by another user, it will print the original poster of the
-URL and the date the URL was originally posted.
+with the URL. If the URL does not point to a html page, it will print the
+content-type if the file. Also creates is.gd links for long urls. If the URL
+has already been posted on the channel by another user, it will print the
+original poster of the URL and the date the URL was originally posted.
 
 The plugin checks all other regex hooks currently active and does not print
 anything if the URL is matched by another plugin. This way it will not
@@ -96,9 +97,12 @@ def urlnazi(match, nick, chan, db, conn, bot):
         if re.search(regex, url) and str(hook).find(os.path.basename(__file__)) == -1:
             return
 
-    html = BeautifulSoup(r.text)
+    if 'text/html' in r.headers['content-type']:
+        out = BeautifulSoup(r.text).title.text.strip()
+    else:
+        out = r.headers['content-type']
 
     if len(url) > url_shortening_limit:
         url = requests.get(base_url, params={'format': 'simple', 'url': url}).text
 
-    return '{} - {}{}'.format(html.title.text.strip(), url, nazi)
+    return '{} - {}{}'.format(out, url, nazi)
