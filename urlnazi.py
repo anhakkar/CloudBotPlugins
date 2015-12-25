@@ -2,8 +2,8 @@
 urlnazi.py - URL Nazi plugin for CloudBot
 
 Listens for URL:s on a channel and prints the <title>-element of the page along
-with the URL. If the URL does not point to a html page, it will print the
-content-type if the file. Also creates is.gd links for long urls. If the URL
+with the URL. If the URL does not point to a HTML page, it will print the
+content-type of the file. Also creates is.gd links for long urls. If the URL
 has already been posted on the channel by another user, it will print the
 original poster of the URL and the date the URL was originally posted.
 
