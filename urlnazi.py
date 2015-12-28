@@ -78,7 +78,8 @@ def urlnazi(match, nick, chan, db, conn, bot):
     url = match.group()
 
     try:
-        r = requests.get(url)
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        r = requests.get(url, headers=headers)
         if r.status_code != requests.codes.ok:
             return url + ': error - HTTP status code ' + str(r.status_code)
     except requests.ConnectionError:
